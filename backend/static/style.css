@@ -69,7 +69,7 @@
     flex-direction: column;
     gap: 10px;
   }
-
+  
   .job-card {
     padding: 15px;
     border: 1px solid #ddd;
@@ -84,5 +84,4 @@
   .job-card p {
     margin: 5px 0;
   }
-  
   

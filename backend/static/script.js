@@ -1,5 +1,4 @@
-  
-  async function handleUpload() {
+async function handleUpload() {
     const fileInput = document.getElementById("resumeUpload");
     const file = fileInput.files[0];
     
@@ -8,7 +7,7 @@
       formData.append("resume", file);
   
       try {
-        const response = await fetch("http://localhost:5000/upload", {
+        const response = await fetch("/upload", {
           method: "POST",
           body: formData,
         });

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job Search Portal</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="container">
+    <!-- Left Section for Upload -->
+    <div class="upload-section">
+      <h2>Upload Your Resume</h2>
+      <input type="file" id="resumeUpload" />
+      <button onclick="handleUpload()">Upload Resume</button>
+    </div>
+    
+    <!-- Right Section for Results -->
+    <div class="results-section">
+      <h2>Job Recommendations</h2>
+      <div id="results">
+        <!-- Dynamic results will appear here -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function handleUpload() {
+      const fileInput = document.getElementById('resumeUpload');
+      const file = fileInput.files[0];
+
+      if (!file) {
+        alert('Please select a file');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('resume', file);
+
+      try {
+        const response = await fetch('/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          document.getElementById('results').innerText = JSON.stringify(result, null, 2);
+        } else {
+          document.getElementById('results').innerText = `Error: ${result.error}`;
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('results').innerText = 'An error occurred while uploading the resume.';
+      }
+    }
+  </script>
+</body>
+</html>

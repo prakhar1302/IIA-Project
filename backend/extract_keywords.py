@@ -1,6 +1,6 @@
 import pdfplumber
 import re
-from typing import Dict, Optional
+from typing import Dict
 
 def extract_resume_info(pdf_path: str) -> Dict:
     """
@@ -29,7 +29,9 @@ def extract_resume_info(pdf_path: str) -> Dict:
         with pdfplumber.open(pdf_path) as pdf:
             full_text = ''
             for page in pdf.pages:
-                full_text += page.extract_text() + '\n'
+                text = page.extract_text()
+                if text:
+                    full_text += text + '\n'
 
             # Split text into lines for processing
             lines = full_text.split('\n')
@@ -44,61 +46,41 @@ def extract_resume_info(pdf_path: str) -> Dict:
             if phones:
                 resume_data['phone'] = phones[0]
 
-            # Assume the first line contains the name
-            if lines:
-                resume_data['name'] = lines[0].strip()
+            # Assume the first non-empty line contains the name
+            for line in lines:
+                if line.strip():
+                    resume_data['name'] = line.strip()
+                    break
 
-            # Process education information
-            education_section = False
-            current_education = []
-
-            # Process experience information
-            experience_section = False
-            current_experience = []
-
-            # Process skills information
-            skills_section = False
-            current_skills = []
+            # Process sections
+            education_section = experience_section = skills_section = False
+            current_education, current_experience, current_skills = [], [], []
 
             for line in lines:
                 line = line.strip()
 
-                # Skip empty lines
-                if not line:
-                    continue
-
                 # Check for section headers
-                if any(keyword in line.lower() for keyword in ['education', 'academic']):
-                    education_section = True
-                    experience_section = False
-                    skills_section = False
+                if 'education' in line.lower() or 'academic' in line.lower():
+                    education_section, experience_section, skills_section = True, False, False
+                    continue
+                elif 'experience' in line.lower() or 'employment' in line.lower():
+                    education_section, experience_section, skills_section = False, True, False
+                    continue
+                elif 'skills' in line.lower() or 'technologies' in line.lower():
+                    education_section, experience_section, skills_section = False, False, True
                     continue
 
-                elif any(keyword in line.lower() for keyword in ['experience', 'employment', 'work history']):
-                    education_section = False
-                    experience_section = True
-                    skills_section = False
-                    continue
-
-                elif any(keyword in line.lower() for keyword in ['skills', 'technologies', 'competencies']):
-                    education_section = False
-                    experience_section = False
-                    skills_section = True
-                    continue
-
-                # Add content to appropriate sections
+                # Add content to the appropriate section
                 if education_section:
                     current_education.append(line)
                 elif experience_section:
                     current_experience.append(line)
                 elif skills_section:
-                    # Split skills by commas if present
                     if ',' in line:
                         current_skills.extend([skill.strip() for skill in line.split(',')])
                     else:
                         current_skills.append(line)
 
-            # Add processed sections to resume_data
             resume_data['education'] = current_education
             resume_data['experience'] = current_experience
             resume_data['skills'] = current_skills
@@ -108,38 +90,3 @@ def extract_resume_info(pdf_path: str) -> Dict:
         return None
 
     return resume_data
-
-def print_resume_info(resume_data: Dict) -> None:
-    """
-    Print the extracted resume information in a formatted way.
-
-    Args:
-        resume_data (Dict): Dictionary containing resume information
-    """
-    if resume_data:
-        print("\n=== RESUME INFORMATION ===\n")
-        print(f"Name: {resume_data['name']}")
-        print(f"Email: {resume_data['email']}")
-        print(f"Phone: {resume_data['phone']}")
-
-        print("\nEducation:")
-        for edu in resume_data['education']:
-            print(f"- {edu}")
-
-        print("\nExperience:")
-        for exp in resume_data['experience']:
-            print(f"- {exp}")
-
-        print("\nSkills:")
-        for skill in resume_data['skills']:
-            print(f"- {skill}")
-    else:
-        print("No resume data available.")
-
-# # Example usage
-# if __name__ == "__main__":
-#     pdf_path = "path/to/your/resume.pdf"  # Update with the actual path
-#     resume_info = extract_resume_info(pdf_path)
-#     print_resume_info(resume_info)
-#     print("\n=== END OF INFORMATION ===\n")
-#     print(resume_info['skills'])
